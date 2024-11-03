@@ -42,15 +42,18 @@ void ping(CommunicationProtocol& communication_protocol) {
 }
 
 void sync_read_position(CommunicationProtocol& communication_protocol) {
-  const auto num_servos = std::stoi(get_input("Enter number of servos: "));
-  const auto ids = ranges::views::iota(1, num_servos + 1) | ranges::to<std::vector<uint8_t>>();
+  const auto num_servos = std::stoul(get_input("Enter number of servos: "));
+  const auto ids = ranges::views::iota(1ul, num_servos + 1) | ranges::to<std::vector<uint8_t>>();
+  std::vector<std::array<uint8_t, 2>> positions(num_servos, {0, 0});
 
   while (true) {
-    spdlog::info("Position: {}",
-                 communication_protocol.sync_read_position(ids)
-                         .or_else([](const std::string& error) { throw std::runtime_error(error); })
-                         .value() |
-                     ranges::actions::transform(to_angle));
+    communication_protocol.sync_read(ids, SMS_STS_PRESENT_POSITION_L, &positions)
+        .or_else([&](const std::string& error) {
+          throw std::runtime_error(fmt::format("Failed to read position [ids={}]", ids, error));
+        });
+    spdlog::info("Position: {}", positions | ranges::views::transform([](const auto& position) {
+                                   return from_sts(WordBytes{.low = position[0], .high = position[1]});
+                                 }) | ranges::views::transform(to_angle));
     std::this_thread::sleep_for(kSleepTime);
   }
 }
@@ -66,7 +69,7 @@ void read_position(CommunicationProtocol& communication_protocol) {
   }
 }
 
-void sync_set_position(CommunicationProtocol& communication_protocol) {
+void sync_write_position(CommunicationProtocol& communication_protocol) {
   const auto num_servos = std::stoul(get_input("Enter number of servos: "));
   const auto ids = ranges::views::iota(1ul, num_servos + 1) | ranges::to<std::vector<uint8_t>>();
   std::vector<int> speeds(num_servos, 0);
@@ -84,7 +87,7 @@ void sync_set_position(CommunicationProtocol& communication_protocol) {
   }
 }
 
-void reg_set_position(CommunicationProtocol& communication_protocol) {
+void reg_write_position(CommunicationProtocol& communication_protocol) {
   const auto num_servos = std::stoi(get_input("Enter number of servos: "));
   while (true) {
     const auto desired_joint_position = std::stoi(get_input("Enter desired joint position: "));
@@ -103,7 +106,7 @@ void reg_set_position(CommunicationProtocol& communication_protocol) {
   }
 }
 
-void set_position(CommunicationProtocol& communication_protocol) {
+void write_position(CommunicationProtocol& communication_protocol) {
   const auto id = std::stoi(get_input("Enter servo ID: "));
   communication_protocol.set_mode(id, OperationMode::kPosition).or_else([](const std::string& error) {
     throw std::runtime_error(error);
@@ -144,11 +147,11 @@ const std::unordered_map<std::string_view, void (*)(CommunicationProtocol&)> kEx
     // clang-format off
     {"ping", ping},
     {"read_position", read_position},
-    {"reg_set_position", reg_set_position},
-    {"set_position", set_position},
+    {"write_position", write_position},
     {"read_speed", read_speed},
     {"print_models", print_models},
-    {"sync_set_position", sync_set_position},
+    {"reg_write_position", reg_write_position},
+    {"sync_write_position", sync_write_position},
     {"sync_read_position", sync_read_position},
     // clang-format on
 };
