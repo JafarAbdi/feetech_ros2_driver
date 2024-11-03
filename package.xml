@@ -19,6 +19,7 @@
   <depend>spdlog</depend>
   <depend>fmt</depend>
   <depend>range-v3</depend>
+  <depend>libserial-dev</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
