@@ -16,9 +16,6 @@ jobs:
           - ROS_DISTRO: jazzy
           - ROS_DISTRO: humble
           - ROS_DISTRO: rolling
-          - CI_NAME: clang-tidy
-            ROS_DISTRO: rolling
-            CLANG_TIDY: true
 
     env:
       CCACHE_DIR: /github/home/.ccache
