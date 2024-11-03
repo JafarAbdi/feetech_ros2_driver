@@ -82,19 +82,11 @@ Result CommunicationProtocol::ping(int id) {
 }
 
 Result CommunicationProtocol::write_position(const uint8_t id, int position, int speed, const int acceleration) {
-  if (position < 0) {
-    position = -position;
-    position |= (1 << 15);
-  }
-  if (speed < 0) {
-    speed = -speed;
-    speed |= (1 << 15);
-  }
   std::array<uint8_t, 7> buffer{};
   buffer[0] = acceleration;
-  to_sts(&buffer[1], &buffer[2], position);
+  to_sts(&buffer[1], &buffer[2], encode_signed_value(position));
   to_sts(&buffer[3], &buffer[4], 0);
-  to_sts(&buffer[5], &buffer[6], speed);
+  to_sts(&buffer[5], &buffer[6], encode_signed_value(speed));
   return write(id, SMS_STS_ACC, buffer);
 }
 

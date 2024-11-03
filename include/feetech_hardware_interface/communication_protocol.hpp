@@ -73,20 +73,6 @@ class CommunicationProtocol {
         .and_then([&] { return serial_port_->write(std::experimental::make_array(static_cast<uint8_t>(~checksum))); });
   }
 
-  Expected<std::vector<int>> sync_read_position(const std::vector<uint8_t>& ids) {
-    std::vector<std::array<uint8_t, 2>> positions;
-    positions.reserve(ids.size());
-    if (auto result = sync_read(ids, SMS_STS_PRESENT_POSITION_L, &positions); !result) {
-      return tl::make_unexpected(fmt::format("CommunicationProtocol::sync_read_position [{}]", result.error()));
-    }
-    std::vector<int> result;
-    result.reserve(positions.size());
-    for (const auto& position : positions) {
-      result.push_back(from_sts(WordBytes{.low = position[0], .high = position[1]}));
-    }
-    return result;
-  }
-
   /// TODO: Should I create a struct??
   /// TOOD: Should I make speed/acceleration optional?
   Result sync_write_position(const std::vector<uint8_t>& ids,
@@ -118,7 +104,7 @@ class CommunicationProtocol {
     buffer[0] = acceleration;
     to_sts(&buffer[1], &buffer[2], encode_signed_value(position));
     to_sts(&buffer[3], &buffer[4], 0);  // Time
-    to_sts(&buffer[5], &buffer[6], speed);
+    to_sts(&buffer[5], &buffer[6], encode_signed_value(speed));
     return reg_write(id, SMS_STS_ACC, buffer);
   }
 
