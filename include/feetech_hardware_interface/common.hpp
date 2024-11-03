@@ -139,40 +139,30 @@ inline Expected<ModelSeries> get_model_series(const std::string_view model_name)
 }  // namespace feetech_hardware_interface
 
 template <typename T>
-struct fmt::formatter<feetech_hardware_interface::Expected<T>> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const feetech_hardware_interface::Expected<T>& result, FormatContext& ctx) {
+struct fmt::formatter<feetech_hardware_interface::Expected<T>> : fmt::formatter<std::string_view> {
+  auto format(const feetech_hardware_interface::Expected<T>& result, fmt::format_context& ctx) const {
     if (result.has_value()) {
-      return format_to(ctx.out(), fmt::fg(fmt::color::light_green), "Expected(value={})", result.value());
+      return fmt::formatter<std::string_view>::format(
+          fmt::format(fmt::fg(fmt::color::light_green), "Expected(value={})", result.value()), ctx);
     }
-    return format_to(ctx.out(), fmt::fg(fmt::color::red), "{}", result.error());
+    return fmt::formatter<std::string_view>::format(fmt::format(fmt::fg(fmt::color::red), "{}", result.error()), ctx);
   }
 };
 
 template <>
-struct fmt::formatter<feetech_hardware_interface::ModelSeries> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const feetech_hardware_interface::ModelSeries& series, FormatContext& ctx) {
+struct fmt::formatter<feetech_hardware_interface::ModelSeries> : formatter<std::string_view> {
+  auto format(const feetech_hardware_interface::ModelSeries& series, fmt::format_context& ctx) const
+      -> fmt::format_context::iterator {
     switch (series) {
       case feetech_hardware_interface::ModelSeries::kSmcl:
-        return format_to(ctx.out(), "ModelSeries::kSmcl");
+        return fmt::formatter<std::string_view>::format("ModelSeries::kSmcl", ctx);
       case feetech_hardware_interface::ModelSeries::kSmbl:
-        return format_to(ctx.out(), "ModelSeries::kSmbl");
+        return fmt::formatter<std::string_view>::format("ModelSeries::kSmbl", ctx);
       case feetech_hardware_interface::ModelSeries::kSts:
-        return format_to(ctx.out(), "ModelSeries::kSts");
+        return fmt::formatter<std::string_view>::format("ModelSeries::kSts", ctx);
       case feetech_hardware_interface::ModelSeries::kScs:
-        return format_to(ctx.out(), "ModelSeries::kScs");
+        return fmt::formatter<std::string_view>::format("ModelSeries::kScs", ctx);
     }
-    return format_to(ctx.out(), "ModelSeries::Unknown");
+    return fmt::formatter<std::string_view>::format("ModelSeries::Unknown", ctx);
   }
 };
