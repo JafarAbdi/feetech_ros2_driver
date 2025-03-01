@@ -11,7 +11,7 @@
 #include <string>
 #include <tl_expected/expected.hpp>
 
-namespace feetech_hardware_interface {
+namespace feetech_driver {
 
 template <typename T>
 using Expected = tl::expected<T, std::string>;
@@ -136,11 +136,11 @@ inline Expected<ModelSeries> get_model_series(const std::string_view model_name)
   return tl::make_unexpected(fmt::format("Unknown model_name [{}]", model_name));
 }
 
-}  // namespace feetech_hardware_interface
+}  // namespace feetech_driver
 
 template <typename T>
-struct fmt::formatter<feetech_hardware_interface::Expected<T>> : fmt::formatter<std::string_view> {
-  auto format(const feetech_hardware_interface::Expected<T>& result, fmt::format_context& ctx) const {
+struct fmt::formatter<feetech_driver::Expected<T>> : fmt::formatter<std::string_view> {
+  auto format(const feetech_driver::Expected<T>& result, fmt::format_context& ctx) const {
     if (result.has_value()) {
       return fmt::formatter<std::string_view>::format(
           fmt::format(fmt::fg(fmt::color::light_green), "Expected(value={})", result.value()), ctx);
@@ -150,17 +150,17 @@ struct fmt::formatter<feetech_hardware_interface::Expected<T>> : fmt::formatter<
 };
 
 template <>
-struct fmt::formatter<feetech_hardware_interface::ModelSeries> : formatter<std::string_view> {
-  auto format(const feetech_hardware_interface::ModelSeries& series, fmt::format_context& ctx) const
+struct fmt::formatter<feetech_driver::ModelSeries> : formatter<std::string_view> {
+  auto format(const feetech_driver::ModelSeries& series, fmt::format_context& ctx) const
       -> fmt::format_context::iterator {
     switch (series) {
-      case feetech_hardware_interface::ModelSeries::kSmcl:
+      case feetech_driver::ModelSeries::kSmcl:
         return fmt::formatter<std::string_view>::format("ModelSeries::kSmcl", ctx);
-      case feetech_hardware_interface::ModelSeries::kSmbl:
+      case feetech_driver::ModelSeries::kSmbl:
         return fmt::formatter<std::string_view>::format("ModelSeries::kSmbl", ctx);
-      case feetech_hardware_interface::ModelSeries::kSts:
+      case feetech_driver::ModelSeries::kSts:
         return fmt::formatter<std::string_view>::format("ModelSeries::kSts", ctx);
-      case feetech_hardware_interface::ModelSeries::kScs:
+      case feetech_driver::ModelSeries::kScs:
         return fmt::formatter<std::string_view>::format("ModelSeries::kScs", ctx);
     }
     return fmt::formatter<std::string_view>::format("ModelSeries::Unknown", ctx);

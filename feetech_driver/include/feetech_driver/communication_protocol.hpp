@@ -1,15 +1,15 @@
 #pragma once
 
-#include <feetech_hardware_interface/SMS_STS.h>
+#include <feetech_driver/SMS_STS.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 #include <sys/types.h>
 
 #include <experimental/array>
-#include <feetech_hardware_interface/serial_port.hpp>
+#include <feetech_driver/serial_port.hpp>
 #include <numeric>
 
-namespace feetech_hardware_interface {
+namespace feetech_driver {
 
 enum class OperationMode {
   kPosition,
@@ -260,4 +260,4 @@ class CommunicationProtocol {
     return serial_port_->write(write_buf);
   }
 };
-}  // namespace feetech_hardware_interface
+}  // namespace feetech_driver
