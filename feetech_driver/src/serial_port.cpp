@@ -1,7 +1,6 @@
 #include <spdlog/spdlog.h>
 
 #include <feetech_driver/serial_port.hpp>
-#include <tl_expected/expected.hpp>
 
 namespace feetech_driver {
 

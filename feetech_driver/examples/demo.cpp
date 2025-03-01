@@ -1,14 +1,13 @@
 #include <spdlog/spdlog.h>
 
-#include <feetech_hardware_interface/communication_protocol.hpp>
+#include <feetech_driver/communication_protocol.hpp>
 #include <iostream>
 #include <range/v3/all.hpp>
 #include <thread>
-#include <tl_expected/expected.hpp>
 #include <unordered_map>
 
 using namespace std::chrono_literals;
-using namespace feetech_hardware_interface;
+using namespace feetech_driver;
 
 std::string get_input(const std::string_view prompt) {
   std::string input;

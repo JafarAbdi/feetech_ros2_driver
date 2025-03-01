@@ -9,7 +9,11 @@
 #include <range/v3/range/concepts.hpp>
 #include <range/v3/range/traits.hpp>
 #include <string>
+#if __has_include(<tl/expected.hpp>)
+#include <tl/expected.hpp>
+#else
 #include <tl_expected/expected.hpp>
+#endif
 
 namespace feetech_driver {
 

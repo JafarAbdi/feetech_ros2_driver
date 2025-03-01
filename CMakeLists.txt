@@ -28,50 +28,6 @@ pkg_check_modules(SERIAL libserial REQUIRED)
 ament_package_xml()
 
 add_library(
-  serial_port
-  src/serial_port.cpp
-)
-target_include_directories(serial_port
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${SERIAL_INCLUDE_DIRS}
-)
-target_link_libraries(serial_port
-  PUBLIC
-  fmt::fmt
-  spdlog::spdlog
-
-  tl_expected::tl_expected
-  ${SERIAL_LIBRARIES}
-)
-set_target_properties(serial_port PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
-
-add_library(
-  communication_protocol
-  src/communication_protocol.cpp
-)
-target_include_directories(communication_protocol
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-target_link_libraries(communication_protocol
-  PUBLIC
-  serial_port
-)
-set_target_properties(communication_protocol PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
-
-add_executable(
-  demo
-  examples/demo.cpp
-)
-target_link_libraries(demo
-  serial_port
-  communication_protocol
-)
-
-add_library(
   ${PROJECT_NAME}
   src/feetech_ros2_driver.cpp
 )

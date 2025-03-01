@@ -7,4 +7,39 @@ version = "0.1.0"
 
 [tasks]
 
+configure = { cmd = [
+  "cmake",
+  "-GNinja",
+  "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+  "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld",
+  "-DCMAKE_MODULE_LINKER_FLAGS=-fuse-ld=lld",
+  "-DCMAKE_SHARED_LINKER_FLAGS=-fuse-ld=lld",
+  "-S",
+  ".",
+  ".build/",
+], cwd = "feetech_driver" }
+build = { cmd = "cmake --build .build/", cwd = "feetech_driver", depends-on = [
+  "configure",
+] }
+install = { cmd = "cmake --install .build/ --prefix .install", cwd = "feetech_driver", depends-on = [
+  "build",
+] }
+
 [dependencies]
+ninja = ">=1.12.1,<2"
+cmake = ">=3.30.5,<4"
+lld = ">=19.1.2,<20"
+
+cpp-expected = ">=1.1.0,<2"
+spdlog = ">=1.14.1,<2"
+fmt = ">=11.0.2,<12"
+range-v3 = ">=0.12.0,<0.13"
+
+[feature.lint.dependencies]
+pre-commit = "*"
+
+[feature.lint.tasks]
+lint = "pre-commit run --all-files"
+
+[environments]
+lint = { features = ["lint"], no-default-feature = true }
