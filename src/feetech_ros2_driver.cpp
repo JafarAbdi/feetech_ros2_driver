@@ -1,8 +1,8 @@
 #include <fmt/ranges.h>
 
 #include <algorithm>
-#include <feetech_hardware_interface/common.hpp>
-#include <feetech_hardware_interface/communication_protocol.hpp>
+#include <feetech_driver/common.hpp>
+#include <feetech_driver/communication_protocol.hpp>
 #include <feetech_ros2_driver/feetech_ros2_driver.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
@@ -26,14 +26,14 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
         "Make sure to have <param name=\"usb_port\">/dev/XXXX</param>");
     return CallbackReturn::ERROR;
   }
-  auto serial_port = std::make_unique<feetech_hardware_interface::SerialPort>(usb_port_it->second);
+  auto serial_port = std::make_unique<feetech_driver::SerialPort>(usb_port_it->second);
 
   if (const auto result = serial_port->configure(); !result) {
     spdlog::error("FeetechHardware::on_init -> {}", result.error());
     return CallbackReturn::ERROR;
   }
 
-  communication_protocol_ = std::make_unique<feetech_hardware_interface::CommunicationProtocol>(std::move(serial_port));
+  communication_protocol_ = std::make_unique<feetech_driver::CommunicationProtocol>(std::move(serial_port));
 
   joint_ids_.resize(info_.joints.size(), 0);
   joint_offsets_.resize(info_.joints.size(), 0);
@@ -65,8 +65,8 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
 
   const auto joint_model_series = joint_ids_ | ranges::views::transform([&](const auto id) {
                                     return communication_protocol_->read_model_number(id)
-                                        .and_then(feetech_hardware_interface::get_model_name)
-                                        .and_then(feetech_hardware_interface::get_model_series);
+                                        .and_then(feetech_driver::get_model_name)
+                                        .and_then(feetech_driver::get_model_series);
                                   });
 
   if (std::ranges::any_of(joint_model_series, [](const auto& series) { return !series.has_value(); })) {
@@ -78,7 +78,7 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
   const auto js = joint_model_series | ranges::views::transform([](const auto& series) { return series.value(); });
 
   // TODO: Support other series
-  if (ranges::any_of(js, [](const auto& series) { return series != feetech_hardware_interface::ModelSeries::kSts; })) {
+  if (ranges::any_of(js, [](const auto& series) { return series != feetech_driver::ModelSeries::kSts; })) {
     spdlog::error("FeetechHardware::on_init [Only STS series is supported]. Input (id, series): {}",
                   ranges::views::zip(joint_ids_, js));
     return CallbackReturn::ERROR;
@@ -120,12 +120,11 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
   }
   ranges::for_each(data | ranges::views::enumerate, [&](const auto& values) {
     const auto& [index, readings] = values;
-    state_hw_positions_[index] = feetech_hardware_interface::to_radians(
-        feetech_hardware_interface::from_sts(
-            feetech_hardware_interface::WordBytes{.low = readings[0], .high = readings[1]}) -
+    state_hw_positions_[index] = feetech_driver::to_radians(
+        feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[0], .high = readings[1]}) -
         joint_offsets_[index]);
-    state_hw_velocities_[index] = feetech_hardware_interface::to_radians(feetech_hardware_interface::from_sts(
-        feetech_hardware_interface::WordBytes{.low = readings[2], .high = readings[3]}));
+    state_hw_velocities_[index] = feetech_driver::to_radians(
+        feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[2], .high = readings[3]}));
   });
   return hardware_interface::return_type::OK;
 }
@@ -135,7 +134,7 @@ hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Ti
   const auto positions = ranges::views::zip(hw_positions_, joint_offsets_) |
                          ranges::views::transform([&](const auto tuple) {
                            auto [position, offset] = tuple;
-                           return feetech_hardware_interface::from_radians(position) + offset;
+                           return feetech_driver::from_radians(position) + offset;
                          }) |
                          ranges::to_vector;
   const auto write_result = communication_protocol_->sync_write_position(

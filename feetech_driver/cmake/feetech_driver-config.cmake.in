@@ -1,7 +1,7 @@
 @PACKAGE_INIT@
 
 if (NOT TARGET feetech_driver::feetech_driver)
-  include(${CMAKE_CURRENT_LIST_DIR}/@targets_export_name@.cmake)
+  include(${CMAKE_CURRENT_LIST_DIR}/feetech_driver-targets.cmake)
 endif ()
 
 check_required_components(feetech_driver)

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <feetech_hardware_interface/communication_protocol.hpp>
-#include <feetech_hardware_interface/serial_port.hpp>
+#include <feetech_driver/communication_protocol.hpp>
+#include <feetech_driver/serial_port.hpp>
 #include <hardware_interface/handle.hpp>
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
@@ -29,7 +29,7 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
  private:
-  std::unique_ptr<feetech_hardware_interface::CommunicationProtocol> communication_protocol_;
+  std::unique_ptr<feetech_driver::CommunicationProtocol> communication_protocol_;
 
   std::vector<double> hw_positions_;
   std::vector<double> state_hw_positions_;
