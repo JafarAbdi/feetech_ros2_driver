@@ -144,7 +144,7 @@ hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Ti
     if (!info_.joints[i].command_interfaces.empty()) {
       commanded_joint_ids.push_back(joint_ids_[i]);
       commanded_positions.push_back(feetech_driver::from_radians(hw_positions_[i]) + joint_offsets_[i]);
-      commanded_speeds.push_back(2400);  // Default speed
+      commanded_speeds.push_back(2400);       // Default speed
       commanded_accelerations.push_back(50);  // Default acceleration
     }
   }
