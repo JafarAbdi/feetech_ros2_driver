@@ -103,7 +103,9 @@ std::vector<hardware_interface::CommandInterface> FeetechHardwareInterface::expo
   std::vector<hardware_interface::CommandInterface> command_interfaces;
   hw_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   for (uint i = 0; i < info_.joints.size(); i++) {
-    command_interfaces.emplace_back(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[i]);
+    if (!info_.joints[i].command_interfaces.empty()) {
+      command_interfaces.emplace_back(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[i]);
+    }
   }
 
   return command_interfaces;
@@ -131,18 +133,32 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
 
 hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Time& /* time */,
                                                                 const rclcpp::Duration& /* period */) {
-  const auto positions = ranges::views::zip(hw_positions_, joint_offsets_) |
-                         ranges::views::transform([&](const auto tuple) {
-                           auto [position, offset] = tuple;
-                           return feetech_driver::from_radians(position) + offset;
-                         }) |
-                         ranges::to_vector;
-  const auto write_result = communication_protocol_->sync_write_position(
-      joint_ids_, positions, std::vector(joint_ids_.size(), 2400), std::vector(joint_ids_.size(), 50));
-  if (!write_result) {
-    spdlog::error("FeetechHardwareInterface::write -> {}", write_result.error());
-    return hardware_interface::return_type::ERROR;
+  // Create vectors only for joints that have command interfaces
+  std::vector<uint8_t> commanded_joint_ids;
+  std::vector<int> commanded_positions;
+  std::vector<int> commanded_speeds;
+  std::vector<int> commanded_accelerations;
+
+  for (uint i = 0; i < info_.joints.size(); i++) {
+    // Only include joints with command interfaces
+    if (!info_.joints[i].command_interfaces.empty()) {
+      commanded_joint_ids.push_back(joint_ids_[i]);
+      commanded_positions.push_back(feetech_driver::from_radians(hw_positions_[i]) + joint_offsets_[i]);
+      commanded_speeds.push_back(2400);  // Default speed
+      commanded_accelerations.push_back(50);  // Default acceleration
+    }
   }
+
+  // Only send commands if there are joints to command
+  if (!commanded_joint_ids.empty()) {
+    const auto write_result = communication_protocol_->sync_write_position(
+        commanded_joint_ids, commanded_positions, commanded_speeds, commanded_accelerations);
+    if (!write_result) {
+      spdlog::error("FeetechHardwareInterface::write -> {}", write_result.error());
+      return hardware_interface::return_type::ERROR;
+    }
+  }
+
   return hardware_interface::return_type::OK;
 }
 
