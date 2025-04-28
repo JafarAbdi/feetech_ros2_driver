@@ -61,6 +61,10 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
         }
       }
     }
+    // Disable holding torque for joints that do not have command interfaces.
+    if (info_.joints[i].command_interfaces.empty()) {
+      communication_protocol_->set_torque(joint_ids_[i], false);
+    }
   }
 
   const auto joint_model_series = joint_ids_ | ranges::views::transform([&](const auto id) {
