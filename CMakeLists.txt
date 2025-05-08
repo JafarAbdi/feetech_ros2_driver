@@ -36,8 +36,13 @@ add_library(${PROJECT_NAME} src/feetech_ros2_driver.cpp)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_lifecycle
-                          lifecycle_msgs hardware_interface pluginlib)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    rclcpp
+    rclcpp_lifecycle
+    lifecycle_msgs
+    hardware_interface
+    pluginlib
+)
 target_link_libraries(${PROJECT_NAME} communication_protocol
                       serial_port)
 
