@@ -37,14 +37,14 @@ target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    rclcpp
-    rclcpp_lifecycle
-    lifecycle_msgs
-    hardware_interface
-    pluginlib
+    communication_protocol
+    serial_port
+    ${lifecycle_msgs_TARGETS}
+    hardware_interface::mock_components
+    pluginlib::pluginlib
+    rclcpp::rclcpp
+    rclcpp_lifecycle::rclcpp_lifecycle
 )
-target_link_libraries(${PROJECT_NAME} communication_protocol
-                      serial_port)
 
 pluginlib_export_plugin_description_file(
   hardware_interface feetech_ros2_control_plugin_description.xml)
