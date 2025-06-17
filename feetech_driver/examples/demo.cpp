@@ -1,6 +1,7 @@
 #include <spdlog/spdlog.h>
 
 #include <feetech_driver/communication_protocol.hpp>
+#include <fmt/ranges.h>
 #include <iostream>
 #include <range/v3/all.hpp>
 #include <thread>
