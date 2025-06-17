@@ -174,6 +174,17 @@ CallbackReturn FeetechHardwareInterface::on_activate(const rclcpp_lifecycle::Sta
   return CallbackReturn::SUCCESS;
 }
 
+CallbackReturn FeetechHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& /* previous_state */) {
+  // all joints torque off
+  for (const auto& id : joint_ids_) {
+    if (const auto result = communication_protocol_->set_torque(id, false); !result) {
+      spdlog::error("FeetechHardwareInterface::on_deactivate -> {}", result.error());
+      return CallbackReturn::ERROR;
+    }
+  }
+  return CallbackReturn::SUCCESS;
+}
+
 }  // namespace feetech_ros2_driver
 
 #include "pluginlib/class_list_macros.hpp"

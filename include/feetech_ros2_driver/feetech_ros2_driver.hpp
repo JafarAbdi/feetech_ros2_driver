@@ -27,6 +27,7 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   hardware_interface::return_type write(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
  private:
   std::unique_ptr<feetech_driver::CommunicationProtocol> communication_protocol_;
