@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
     for (const auto& [key, _] : kExamples) {
       keys.push_back(key);
     }
-    spdlog::error("Invalid example name: {} - Available examples: {}", argv[1], keys | ranges::views::join(", "));
+    spdlog::error("Invalid example name: {} - Available examples: {}", argv[1], fmt::join(keys, ", "));
     return EXIT_FAILURE;
   }
 
