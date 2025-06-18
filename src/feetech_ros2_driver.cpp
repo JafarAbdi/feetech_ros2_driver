@@ -177,7 +177,7 @@ CallbackReturn FeetechHardwareInterface::on_activate(const rclcpp_lifecycle::Sta
 CallbackReturn FeetechHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& /* previous_state */) {
   // all joints torque off
   const auto torque_disable_parameters =
-    std::vector(joint_ids_.size(), std::experimental::make_array(static_cast<uint8_t>(0)));
+      std::vector(joint_ids_.size(), std::experimental::make_array(static_cast<uint8_t>(0)));
   if (const auto result =
           communication_protocol_->sync_write(joint_ids_, SMS_STS_TORQUE_ENABLE, torque_disable_parameters);
       !result) {
