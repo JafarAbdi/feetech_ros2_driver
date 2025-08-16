@@ -20,6 +20,7 @@ jobs:
     env:
       CCACHE_DIR: /github/home/.ccache
       ROS_REPO: main
+      TARGET_CMAKE_ARGS: -DWARNINGS_AS_ERRORS=ON
 
     runs-on: ubuntu-latest
     steps:
