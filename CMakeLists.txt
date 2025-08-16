@@ -5,7 +5,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(WARNINGS_AS_ERRORS)
+    add_compile_options(-Werror)
+  endif()
   add_compile_options(
     -Wall
     -Wextra
