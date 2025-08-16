@@ -14,13 +14,13 @@
 #include <vector>
 
 namespace feetech_ros2_driver {
-CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
-  if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareComponentInterfaceParams& params) {
+  if (hardware_interface::SystemInterface::on_init(params) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
 
-  const auto usb_port_it = info_.hardware_parameters.find("usb_port");
-  if (usb_port_it == info_.hardware_parameters.end()) {
+  const auto usb_port_it = params.hardware_info.hardware_parameters.find("usb_port");
+  if (usb_port_it == params.hardware_info.hardware_parameters.end()) {
     spdlog::error(
         "FeetechHardware::on_init Hardware parameter [{}] not found!. "
         "Make sure to have <param name=\"usb_port\">/dev/XXXX</param>");
@@ -35,17 +35,17 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
 
   communication_protocol_ = std::make_unique<feetech_driver::CommunicationProtocol>(std::move(serial_port));
 
-  joint_ids_.resize(info_.joints.size(), 0);
-  joint_offsets_.resize(info_.joints.size(), 0);
+  joint_ids_.resize(params.hardware_info.joints.size(), 0);
+  joint_offsets_.resize(params.hardware_info.joints.size(), 0);
 
-  for (uint i = 0; i < info_.joints.size(); i++) {
-    const auto& joint_params = info_.joints[i].parameters;
+  for (uint i = 0; i < params.hardware_info.joints.size(); i++) {
+    const auto& joint_params = params.hardware_info.joints[i].parameters;
     joint_ids_[i] = std::stoi(joint_params.at("id"));
     joint_offsets_[i] = [&] {
       if (const auto offset_it = joint_params.find("offset"); offset_it != joint_params.end()) {
         return std::stoi(offset_it->second);
       }
-      spdlog::info("Joint '{}' does not specify an offset parameter - Setting it to 0", info_.joints[i].name);
+      spdlog::info("Joint '{}' does not specify an offset parameter - Setting it to 0", params.hardware_info.joints[i].name);
       return 0;
     }();
 
@@ -62,7 +62,7 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
       }
     }
     // Disable holding torque for joints that do not have command interfaces.
-    if (info_.joints[i].command_interfaces.empty()) {
+    if (params.hardware_info.joints[i].command_interfaces.empty()) {
       communication_protocol_->set_torque(joint_ids_[i], false);
     }
   }
