@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>feetech_ros2_driver</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>ros2_control hardware interface for Feetech Servos</description>
   <maintainer email="jafar.uruc@gmail.com">Jafar Uruc</maintainer>
   <license>BSD</license>

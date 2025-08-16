@@ -2,8 +2,8 @@
 Changelog for package feetech_ros2_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2025-08-16)
+------------------
 * 🛠️ Bump actions/checkout from 4 to 5 (`#15 <https://github.com/JafarAbdi/feetech_ros2_driver/issues/15>`_)
   Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 5.
   - [Release notes](https://github.com/actions/checkout/releases)
