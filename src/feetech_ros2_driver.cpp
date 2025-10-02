@@ -14,8 +14,8 @@
 #include <vector>
 
 namespace feetech_ros2_driver {
-CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
-  if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareComponentInterfaceParams& params) {
+  if (hardware_interface::SystemInterface::on_init(params) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
 
