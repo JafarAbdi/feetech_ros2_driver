@@ -44,13 +44,13 @@ class CommunicationProtocol {
     }
 
     std::array<uint8_t, 7> buffer{
-        0xff,
-        0xff,
-        kBroadcastId,
-        static_cast<uint8_t>((N + 1) * ids.size() + 4),  // Message length = #parameters * (#parameters + 1 (id)) + 4
-        kInstructionSyncWrite,
-        memory_address,
-        N};
+        {0xff,
+         0xff,
+         kBroadcastId,
+         static_cast<uint8_t>((N + 1) * ids.size() + 4),  // Message length = #parameters * (#parameters + 1 (id)) + 4
+         kInstructionSyncWrite,
+         memory_address,
+         N}};
     uint8_t checksum = buffer[2] + buffer[3] + buffer[4] + buffer[5] + buffer[6];
 
     return serial_port_->write(buffer)
@@ -142,13 +142,13 @@ class CommunicationProtocol {
   Result sync_read(const std::vector<uint8_t>& ids,
                    const uint8_t memory_address,
                    std::vector<std::array<uint8_t, N>>* data) {
-    std::array<uint8_t, 7> buffer{0,
-                                  0,
-                                  kBroadcastId,
-                                  static_cast<uint8_t>(ids.size() + 4),  // Message length = #servos(=ids) + 4
-                                  kInstructionSyncRead,
-                                  memory_address,
-                                  N};
+    std::array<uint8_t, 7> buffer{{0,
+                                   0,
+                                   kBroadcastId,
+                                   static_cast<uint8_t>(ids.size() + 4),  // Message length = #servos(=ids) + 4
+                                   kInstructionSyncRead,
+                                   memory_address,
+                                   N}};
     uint8_t request_checksum = sum_bytes(buffer);
 
     // Set these two after calculating the checksum
