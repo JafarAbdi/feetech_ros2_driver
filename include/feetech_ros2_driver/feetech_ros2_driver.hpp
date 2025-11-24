@@ -10,13 +10,23 @@
 #include <rclcpp_lifecycle/state.hpp>
 #include <vector>
 
+#if __has_include(<hardware_interface/hardware_interface/version.h>)
+#include <hardware_interface/hardware_interface/version.h>
+#else
+#include <hardware_interface/version.h>
+#endif
+
 namespace feetech_ros2_driver {
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 class FeetechHardwareInterface : public hardware_interface::SystemInterface {
  public:
+#if HARDWARE_INTERFACE_VERSION_GTE(4, 34, 0)
+  CallbackReturn on_init(const hardware_interface::HardwareComponentInterfaceParams& params) override;
+#else
   CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
+#endif
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 

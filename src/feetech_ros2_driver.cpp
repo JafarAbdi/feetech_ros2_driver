@@ -14,8 +14,13 @@
 #include <vector>
 
 namespace feetech_ros2_driver {
+#if HARDWARE_INTERFACE_VERSION_GTE(4, 34, 0)
+CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareComponentInterfaceParams& params) {
+  if (hardware_interface::SystemInterface::on_init(params) != CallbackReturn::SUCCESS) {
+#else
 CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+#endif
     return CallbackReturn::ERROR;
   }
 
