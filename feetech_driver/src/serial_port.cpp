@@ -78,7 +78,7 @@ Expected<LibSerial::BaudRate> to_baudrate(const std::size_t baud) noexcept {
 
 SerialPort::SerialPort(const std::string& dev) : dev_(dev) { spdlog::info("Connecting to port: {}", dev); }
 
-SerialPort::~SerialPort() { 
+SerialPort::~SerialPort() {
   (void)close();  // explicitly discards result
 }
 
