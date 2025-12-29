@@ -2,8 +2,8 @@
 Changelog for package feetech_ros2_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2025-12-29)
+------------------
 * Fix unused result warning (`#24 <https://github.com/JafarAbdi/feetech_ros2_driver/issues/24>`_)
 * 🛠️ Bump actions/cache from 4 to 5 (`#23 <https://github.com/JafarAbdi/feetech_ros2_driver/issues/23>`_)
   Bumps [actions/cache](https://github.com/actions/cache) from 4 to 5.
