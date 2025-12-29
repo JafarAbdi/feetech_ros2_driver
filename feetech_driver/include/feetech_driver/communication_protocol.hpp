@@ -99,6 +99,20 @@ class CommunicationProtocol {
     return sync_write(ids, SMS_STS_ACC, buffer);
   }
 
+  Result sync_write_velocity(const std::vector<uint8_t>& ids, const std::vector<int>& speed) {
+    if (ids.size() != speed.size()) {
+      return tl::make_unexpected(
+          fmt::format("Sizes of IDs and speed must be the same - ids[{}], speed[{}]", ids.size(), speed.size()));
+    }
+
+    std::vector<std::array<uint8_t, 2>> buffer;
+    buffer.resize(ids.size());
+    for (size_t i = 0; i < ids.size(); ++i) 
+      to_sts(&buffer[i][0], &buffer[i][1], speed[i]);
+
+    return sync_write(ids, SMS_STS_GOAL_SPEED_L, buffer); 
+  }
+
   Result reg_write_position(const uint8_t id, const int position, const int speed, const int acceleration) {
     std::array<uint8_t, 7> buffer{};
     buffer[0] = acceleration;

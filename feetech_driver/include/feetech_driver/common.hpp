@@ -22,6 +22,7 @@ using Expected = tl::expected<T, std::string>;
 using Result = Expected<void>;
 
 inline static constexpr double kStsResolution = 4096.;
+inline static constexpr double kStsSpeedScale = 652.24; // 652.24 ≈ (3400 RAW/s) / (49.776 RPM * 2pi/60)
 inline static constexpr std::size_t kMaxServoId = 253;
 // STS models
 inline static constexpr std::size_t kHighByteIndex = 1;
@@ -37,6 +38,13 @@ inline auto to_radians(const int data) { return data * 2.0 * std::numbers::pi / 
 
 inline auto from_radians(const double angle) {
   return static_cast<int>(angle * kStsResolution / (2.0 * std::numbers::pi));
+}
+
+inline auto from_radians_per_second(double radians_per_second) {
+  if (static_cast<int>(std::round(radians_per_second * kStsSpeedScale)) < 0) {
+    return (std::abs(static_cast<int>(std::round(radians_per_second * kStsSpeedScale))) | 0x8000);
+  }
+  return static_cast<int>(std::round(radians_per_second * kStsSpeedScale));
 }
 
 inline auto encode_signed_value(int position) {
