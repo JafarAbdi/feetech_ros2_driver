@@ -11,6 +11,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace feetech_ros2_driver {
@@ -68,7 +69,7 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
     }
     // Disable holding torque for joints that do not have command interfaces.
     if (info_.joints[i].command_interfaces.empty()) {
-      (void)communication_protocol_->set_torque(joint_ids_[i], false);
+      std::ignore = communication_protocol_->set_torque(joint_ids_[i], false);
     }
   }
 

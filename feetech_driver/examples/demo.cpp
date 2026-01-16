@@ -5,6 +5,7 @@
 #include <iostream>
 #include <range/v3/all.hpp>
 #include <thread>
+#include <tuple>
 #include <unordered_map>
 
 using namespace std::chrono_literals;
@@ -21,24 +22,24 @@ static constexpr auto kSleepTime = 100ms;
 
 void print_models(CommunicationProtocol& communication_protocol) {
   for (std::size_t id = 0; id <= kMaxServoId; id++) {
-    (void)communication_protocol.read_model_number(id)
-        .and_then(get_model_name)
-        .and_then([=](const auto model_name) {
-          spdlog::info("Servo ID: {} - Model name: {}", id, model_name);
-          return Result{};
-        })
-        .or_else([=](const std::string& error) { spdlog::debug("Servo ID: {} - Error: {}", id, error); });
+    std::ignore = communication_protocol.read_model_number(id)
+                      .and_then(get_model_name)
+                      .and_then([=](const auto model_name) {
+                        spdlog::info("Servo ID: {} - Model name: {}", id, model_name);
+                        return Result{};
+                      })
+                      .or_else([=](const std::string& error) { spdlog::debug("Servo ID: {} - Error: {}", id, error); });
   }
 }
 
 void ping(CommunicationProtocol& communication_protocol) {
   const auto id = std::stoi(get_input("Enter servo ID: "));
-  (void)communication_protocol.ping(id)
-      .and_then([] {
-        spdlog::info("Ping success");
-        return Result{};
-      })
-      .or_else([](const std::string& error) { spdlog::error("Ping failed: [{}]", error); });
+  std::ignore = communication_protocol.ping(id)
+                    .and_then([] {
+                      spdlog::info("Ping success");
+                      return Result{};
+                    })
+                    .or_else([](const std::string& error) { spdlog::error("Ping failed: [{}]", error); });
 }
 
 void sync_read_position(CommunicationProtocol& communication_protocol) {
@@ -47,10 +48,10 @@ void sync_read_position(CommunicationProtocol& communication_protocol) {
   std::vector<std::array<uint8_t, 2>> positions(num_servos, {0, 0});
 
   while (true) {
-    (void)communication_protocol.sync_read(ids, SMS_STS_PRESENT_POSITION_L, &positions)
-        .or_else([&](const std::string& error) {
-          throw std::runtime_error(fmt::format("Failed to read position [ids={}]", ids, error));
-        });
+    std::ignore = communication_protocol.sync_read(ids, SMS_STS_PRESENT_POSITION_L, &positions)
+                      .or_else([&](const std::string& error) {
+                        throw std::runtime_error(fmt::format("Failed to read position [ids={}]", ids, error));
+                      });
     spdlog::info("Position: {}", positions | ranges::views::transform([](const auto& position) {
                                    return from_sts(WordBytes{.low = position[0], .high = position[1]});
                                  }) | ranges::views::transform(to_angle));
@@ -80,10 +81,10 @@ void sync_write_position(CommunicationProtocol& communication_protocol) {
     std::vector<int> positions(num_servos, from_angle(desired_joint_position));
 
     spdlog::info("Setting positions to {}", positions);
-    (void)communication_protocol.sync_write_position(ids, positions, speeds, accelerations)
-        .or_else([=](const std::string& error) {
-          throw std::runtime_error(fmt::format("Failed to set position [ids={}]", ids, error));
-        });
+    std::ignore = communication_protocol.sync_write_position(ids, positions, speeds, accelerations)
+                      .or_else([=](const std::string& error) {
+                        throw std::runtime_error(fmt::format("Failed to set position [ids={}]", ids, error));
+                      });
   }
 }
 
@@ -95,12 +96,13 @@ void reg_write_position(CommunicationProtocol& communication_protocol) {
 
     spdlog::info("Setting position to {}°: {}", desired_joint_position, data);
     for (uint8_t servo_id = 1; servo_id <= num_servos; servo_id++) {
-      (void)communication_protocol.reg_write_position(servo_id, data, 0, 0).or_else([=](const std::string& error) {
-        throw std::runtime_error(fmt::format("Failed to set position [id={}][{}]", servo_id, error));
-      });
+      std::ignore =
+          communication_protocol.reg_write_position(servo_id, data, 0, 0).or_else([=](const std::string& error) {
+            throw std::runtime_error(fmt::format("Failed to set position [id={}][{}]", servo_id, error));
+          });
     }
     get_input("Press enter to continue");
-    (void)communication_protocol.reg_write_action().or_else([](const std::string& error) {
+    std::ignore = communication_protocol.reg_write_action().or_else([](const std::string& error) {
       throw std::runtime_error(fmt::format("Failed to set position action [{}]", error));
     });
   }
@@ -108,7 +110,7 @@ void reg_write_position(CommunicationProtocol& communication_protocol) {
 
 void write_position(CommunicationProtocol& communication_protocol) {
   const auto id = std::stoi(get_input("Enter servo ID: "));
-  (void)communication_protocol.set_mode(id, OperationMode::kPosition).or_else([](const std::string& error) {
+  std::ignore = communication_protocol.set_mode(id, OperationMode::kPosition).or_else([](const std::string& error) {
     throw std::runtime_error(error);
   });
   while (true) {
@@ -176,9 +178,10 @@ int main(int argc, char** argv) {
   const std::string port_name = argv[2];
 
   auto serial_port = std::make_unique<SerialPort>(port_name);
-  (void)serial_port->configure().and_then([&] { return serial_port->open(); }).or_else([](const std::string& error) {
-    throw std::runtime_error(error);
-  });
+  std::ignore =
+      serial_port->configure().and_then([&] { return serial_port->open(); }).or_else([](const std::string& error) {
+        throw std::runtime_error(error);
+      });
 
   auto communication_protocol = CommunicationProtocol(std::move(serial_port));
   example->second(communication_protocol);
