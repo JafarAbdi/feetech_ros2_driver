@@ -37,6 +37,7 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
 
   joint_ids_.resize(info_.joints.size(), 0);
   joint_offsets_.resize(info_.joints.size(), 0);
+  joint_counter_rotations_.resize(info_.joints.size(), false);
 
   for (uint i = 0; i < info_.joints.size(); i++) {
     const auto& joint_params = info_.joints[i].parameters;
@@ -48,6 +49,12 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
       spdlog::info("Joint '{}' does not specify an offset parameter - Setting it to 0", info_.joints[i].name);
       return 0;
     }();
+
+    if (const auto counter_rotation_it = joint_params.find("counter_rotation"); counter_rotation_it != joint_params.end()) {
+      // "True" / "true" / "False" / "false" / "1" / "0"
+      joint_counter_rotations_[i] =
+          (counter_rotation_it->second == "True" || counter_rotation_it->second == "true" || counter_rotation_it->second == "1");
+    }
 
     for (const auto& [parameter_name, address] : {std::pair{"p_cofficient", SMS_STS_P_COEF},
                                                   {"d_cofficient", SMS_STS_D_COEF},
@@ -133,10 +140,12 @@ hardware_interface::return_type FeetechHardwareInterface::read(const rclcpp::Tim
   }
   ranges::for_each(data | ranges::views::enumerate, [&](const auto& values) {
     const auto& [index, readings] = values;
-    state_hw_positions_[index] = feetech_driver::to_radians(
+    int pn = 1;
+    if (joint_counter_rotations_[index]) pn = -1;
+    state_hw_positions_[index] = pn * feetech_driver::to_radians(
         feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[0], .high = readings[1]}) -
         joint_offsets_[index]);
-    state_hw_velocities_[index] = feetech_driver::to_radians(
+    state_hw_velocities_[index] = pn * feetech_driver::to_radians(
         feetech_driver::from_sts(feetech_driver::WordBytes{.low = readings[2], .high = readings[3]}));
   });
   return hardware_interface::return_type::OK;
@@ -166,16 +175,19 @@ hardware_interface::return_type FeetechHardwareInterface::write(const rclcpp::Ti
 
     auto sel_mode = (!has_vel_interface && has_pos_interface && !std::isnan(hw_positions_[i])) ? hardware_interface::HW_IF_POSITION : hardware_interface::HW_IF_VELOCITY;
 
+    int pn = 1;
+    if (joint_counter_rotations_[i]) pn = -1;
+
     // Only include joints with command interfaces
     if (!info_.joints[i].command_interfaces.empty()) {
       if (sel_mode == hardware_interface::HW_IF_POSITION) {
         pos_commanded_joint_ids.push_back(joint_ids_[i]);
-        commanded_positions.push_back(feetech_driver::from_radians(hw_positions_[i]) + joint_offsets_[i]);
+        commanded_positions.push_back(pn * feetech_driver::from_radians(hw_positions_[i]) + joint_offsets_[i]);
         commanded_speeds.push_back(2400);       // Default speed
         commanded_accelerations.push_back(50);  // Default acceleration
       } else if (sel_mode == hardware_interface::HW_IF_VELOCITY) {
         vel_commanded_joint_ids.push_back(joint_ids_[i]);
-        commanded_velocities.push_back(feetech_driver::from_radians_per_second(hw_velocities_[i])); 
+        commanded_velocities.push_back(feetech_driver::from_radians_per_second(pn * hw_velocities_[i])); 
       }
     }
   }
