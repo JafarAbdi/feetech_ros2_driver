@@ -2,8 +2,8 @@
 Changelog for package feetech_ros2_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2026-01-21)
+------------------
 * Fix nodiscard errors by explicitly discarding. (`#26 <https://github.com/JafarAbdi/feetech_ros2_driver/issues/26>`_)
   * Fix nodiscard errors by explicitly discarding.
   * Use std::ignore to ignore returned value
