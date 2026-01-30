@@ -43,11 +43,13 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   std::unique_ptr<feetech_driver::CommunicationProtocol> communication_protocol_;
 
   std::vector<double> hw_positions_;
+  std::vector<double> hw_velocities_;
   std::vector<double> state_hw_positions_;
   std::vector<double> state_hw_velocities_;
   std::vector<uint8_t> previous_hw_positions_;
 
   std::vector<uint8_t> joint_ids_;
   std::vector<int> joint_offsets_;
+  std::vector<bool> joint_counter_rotations_;
 };
 }  // namespace feetech_ros2_driver
