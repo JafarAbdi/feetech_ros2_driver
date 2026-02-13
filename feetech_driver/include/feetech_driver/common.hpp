@@ -22,6 +22,7 @@ using Expected = tl::expected<T, std::string>;
 using Result = Expected<void>;
 
 inline static constexpr double kStsResolution = 4096.;
+inline static constexpr int kStsMidpoint = static_cast<int>(kStsResolution) / 2;  // 2048: center tick after homing
 inline static constexpr std::size_t kMaxServoId = 253;
 // STS models
 inline static constexpr std::size_t kHighByteIndex = 1;
@@ -39,9 +40,23 @@ inline auto from_radians(const double angle) {
   return static_cast<int>(angle * kStsResolution / (2.0 * std::numbers::pi));
 }
 
-inline auto encode_signed_value(int position) {
-  return position < 0 ? (-position | (1 << 15)) :  // Set MSB for negative
-             position;                             // Keep positive as is
+/// Sign-magnitude encoding: encode a signed value using the specified sign bit
+/// https://en.wikipedia.org/wiki/Signed_number_representations#Sign%E2%80%93magnitude
+inline auto encode_sign_magnitude(const int value, const int sign_bit) {
+  const int max_magnitude = (1 << sign_bit) - 1;
+  const int magnitude = std::abs(value);
+  if (magnitude > max_magnitude) {
+    throw std::out_of_range("Magnitude exceeds max for sign bit");
+  }
+  return value < 0 ? (magnitude | (1 << sign_bit)) : value;
+}
+
+/// Sign-magnitude decoding: decode a value that uses sign-magnitude encoding
+/// https://en.wikipedia.org/wiki/Signed_number_representations#Sign%E2%80%93magnitude
+inline auto decode_sign_magnitude(const int encoded, const int sign_bit) {
+  const bool is_negative = (encoded >> sign_bit) & 1;
+  const int magnitude = encoded & ((1 << sign_bit) - 1);
+  return is_negative ? -magnitude : magnitude;
 }
 
 struct WordBytes {

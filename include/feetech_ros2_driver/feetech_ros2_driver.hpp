@@ -16,6 +16,8 @@
 #include <hardware_interface/version.h>
 #endif
 
+#include "feetech_ros2_driver/joint_config.hpp"
+
 namespace feetech_ros2_driver {
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -48,6 +50,10 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   std::vector<uint8_t> previous_hw_positions_;
 
   std::vector<uint8_t> joint_ids_;
-  std::vector<int> joint_offsets_;
+
+  CallbackReturn init_transport_();
+  CallbackReturn load_yaml_config_and_warn_(JointConfigMap& out_yaml);
+  CallbackReturn configure_joints_(const JointConfigMap& yaml_config);
+  CallbackReturn validate_model_series_();
 };
 }  // namespace feetech_ros2_driver

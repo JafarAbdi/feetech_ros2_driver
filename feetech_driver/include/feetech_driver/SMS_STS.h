@@ -72,3 +72,10 @@
 #define SMS_STS_MOVING 66
 #define SMS_STS_PRESENT_CURRENT_L 69
 #define SMS_STS_PRESENT_CURRENT_H 70
+
+//-------Sign-magnitude encoding bit positions--------
+// These define which bit is used as the sign bit for signed values
+// Compatible with LeRobot's STS_SMS_SERIES_ENCODINGS_TABLE
+#define SMS_STS_SIGN_BIT_HOMING_OFFSET 11
+#define SMS_STS_SIGN_BIT_POSITION 15
+#define SMS_STS_SIGN_BIT_VELOCITY 15

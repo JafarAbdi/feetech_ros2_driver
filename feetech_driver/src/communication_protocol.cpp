@@ -84,22 +84,30 @@ Result CommunicationProtocol::ping(int id) {
 Result CommunicationProtocol::write_position(const uint8_t id, int position, int speed, const int acceleration) {
   std::array<uint8_t, 7> buffer{};
   buffer[0] = acceleration;
-  to_sts(&buffer[1], &buffer[2], encode_signed_value(position));
+  to_sts(&buffer[1], &buffer[2], encode_sign_magnitude(position, SMS_STS_SIGN_BIT_POSITION));
   to_sts(&buffer[3], &buffer[4], 0);
-  to_sts(&buffer[5], &buffer[6], encode_signed_value(speed));
+  to_sts(&buffer[5], &buffer[6], encode_sign_magnitude(speed, SMS_STS_SIGN_BIT_VELOCITY));
   return write(id, SMS_STS_ACC, buffer);
 }
 
 Expected<int> CommunicationProtocol::read_position(const uint8_t id) {
   return read_word(id, SMS_STS_PRESENT_POSITION_L).and_then([](auto position) -> Expected<int> {
-    return encode_signed_value(position);
+    return decode_sign_magnitude(position, SMS_STS_SIGN_BIT_POSITION);
   });
 }
 
 Expected<int> CommunicationProtocol::read_speed(const uint8_t id) {
   return read_word(id, SMS_STS_PRESENT_SPEED_L).and_then([](auto speed) -> Expected<int> {
-    return encode_signed_value(speed);
+    return decode_sign_magnitude(speed, SMS_STS_SIGN_BIT_VELOCITY);
   });
+}
+
+Result CommunicationProtocol::enable_torque(const uint8_t id) {
+  return set_torque(id, true).and_then([&] { return lock_eprom(id); });
+}
+
+Result CommunicationProtocol::disable_torque(const uint8_t id) {
+  return set_torque(id, false).and_then([&] { return unlock_eprom(id); });
 }
 
 Result CommunicationProtocol::set_torque(const uint8_t id, const bool enable) {

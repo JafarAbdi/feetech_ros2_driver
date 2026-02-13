@@ -4,6 +4,7 @@
 #include <libserial/SerialPort.h>
 
 #include <chrono>
+#include <cstring>
 #include <feetech_driver/common.hpp>
 #include <range/v3/all.hpp>
 #include <string>
@@ -30,16 +31,36 @@ class SerialPort {
     return {};
   }
 
+  Result read_exact(uint8_t* dst, size_t n) {
+    try {
+      std::string s;
+      s.resize(n);
+      // Read exactly n bytes (or throw ReadTimeout)
+      port_.Read(s, n, static_cast<std::size_t>(timeout_.count()));
+      std::memcpy(dst, s.data(), n);
+      return {};
+    } catch (const LibSerial::ReadTimeout& e) {
+      return tl::make_unexpected(fmt::format("SerialPort::read_exact [{}]", e.what()));
+    } catch (const std::runtime_error& e) {
+      return tl::make_unexpected(fmt::format("SerialPort::read_exact [{}]", e.what()));
+    }
+  }
+
+  // template <std::size_t N>
+  // Result read(std::array<uint8_t, N>* buffer) {
+  //   return check_port().and_then([&]() -> Result {
+  //     for (auto& byte : *buffer) {
+  //       if (const auto result = read_byte(&byte); !result) {
+  //         return tl::make_unexpected(fmt::format("SerialPort::read -> {}", result.error()));
+  //       }
+  //     }
+  //     return {};
+  //   });
+  // }
+
   template <std::size_t N>
   Result read(std::array<uint8_t, N>* buffer) {
-    return check_port().and_then([&]() -> Result {
-      for (auto& byte : *buffer) {
-        if (const auto result = read_byte(&byte); !result) {
-          return tl::make_unexpected(fmt::format("SerialPort::read -> {}", result.error()));
-        }
-      }
-      return {};
-    });
+    return check_port().and_then([&]() { return read_exact(buffer->data(), N); });
   }
 
   template <std::size_t N>
@@ -57,7 +78,7 @@ class SerialPort {
  private:
   [[nodiscard]] Result check_port() const noexcept;
   std::string dev_;
-  std::chrono::milliseconds timeout_ = std::chrono::milliseconds(10);
+  std::chrono::milliseconds timeout_ = std::chrono::milliseconds(5);
   LibSerial::SerialPort port_;
 };
 }  // namespace feetech_driver

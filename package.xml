@@ -20,6 +20,7 @@
   <depend>fmt</depend>
   <depend>range-v3</depend>
   <depend>pkg-config</depend>
+  <depend>yaml-cpp</depend>
   <depend>libserial-dev</depend>
   <export>
     <build_type>ament_cmake</build_type>

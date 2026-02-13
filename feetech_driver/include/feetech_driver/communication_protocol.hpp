@@ -92,9 +92,9 @@ class CommunicationProtocol {
     buffer.resize(ids.size());
     for (size_t i = 0; i < ids.size(); ++i) {
       buffer[i][0] = acceleration[i];
-      to_sts(&buffer[i][1], &buffer[i][2], encode_signed_value(position[i]));
+      to_sts(&buffer[i][1], &buffer[i][2], encode_sign_magnitude(position[i], SMS_STS_SIGN_BIT_POSITION));
       to_sts(&buffer[i][3], &buffer[i][4], 0);  // Time
-      to_sts(&buffer[i][5], &buffer[i][6], speed[i]);
+      to_sts(&buffer[i][5], &buffer[i][6], encode_sign_magnitude(speed[i], SMS_STS_SIGN_BIT_VELOCITY));
     }
     return sync_write(ids, SMS_STS_ACC, buffer);
   }
@@ -102,9 +102,9 @@ class CommunicationProtocol {
   Result reg_write_position(const uint8_t id, const int position, const int speed, const int acceleration) {
     std::array<uint8_t, 7> buffer{};
     buffer[0] = acceleration;
-    to_sts(&buffer[1], &buffer[2], encode_signed_value(position));
+    to_sts(&buffer[1], &buffer[2], encode_sign_magnitude(position, SMS_STS_SIGN_BIT_POSITION));
     to_sts(&buffer[3], &buffer[4], 0);  // Time
-    to_sts(&buffer[5], &buffer[6], encode_signed_value(speed));
+    to_sts(&buffer[5], &buffer[6], encode_sign_magnitude(speed, SMS_STS_SIGN_BIT_VELOCITY));
     return reg_write(id, SMS_STS_ACC, buffer);
   }
 
@@ -114,6 +114,11 @@ class CommunicationProtocol {
       return read_response(id);
     });
   }
+
+  /// Disable torque and unlock EPROM 
+  Result disable_torque(uint8_t id);
+  /// Enable torque and lock EPROM 
+  Result enable_torque(uint8_t id);
 
   Result set_torque(uint8_t id, bool enable);
   Result calbration_offset(uint8_t id);
