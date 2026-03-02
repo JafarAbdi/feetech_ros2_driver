@@ -130,6 +130,10 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointConfigMap&
     }
     joint_ids_[i] = static_cast<uint8_t>(std::stoi(id_it->second));
 
+    if (merged_params.find("offset") != merged_params.end()) {
+      spdlog::warn("Joint '{}': 'offset' param is deprecated and ignored — use 'homing_offset' instead", joint_name);
+    }
+
     // Disable torque and unlock EPROM before writing parameters
     if (const auto result = communication_protocol_->disable_torque(joint_ids_[i]); !result) {
       spdlog::error("FeetechHardwareInterface::configure_joints_ disable_torque -> {}", result.error());
