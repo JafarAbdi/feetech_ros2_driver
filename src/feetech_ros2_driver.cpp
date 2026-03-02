@@ -68,12 +68,13 @@ CallbackReturn FeetechHardwareInterface::init_transport_() {
   return CallbackReturn::SUCCESS;
 }
 
+// Optional YAML overlay — if not provided, URDF params are used as-is.
 CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointConfigMap& out_yaml) {
   out_yaml.clear();
 
   const auto cfg_it = info_.hardware_parameters.find("joint_config_file");
   if (cfg_it == info_.hardware_parameters.end() || cfg_it->second.empty()) {
-    return CallbackReturn::SUCCESS;  // YAML not provided
+    return CallbackReturn::SUCCESS;  // no YAML — fall back to URDF params only
   }
 
   auto loaded = load_joint_config(cfg_it->second);
