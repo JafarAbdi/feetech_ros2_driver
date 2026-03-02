@@ -49,7 +49,7 @@ CallbackReturn FeetechHardwareInterface::init_transport_() {
   const auto usb_port_it = info_.hardware_parameters.find("usb_port");
   if (usb_port_it == info_.hardware_parameters.end()) {
     spdlog::error(
-        "FeetechHardware::on_init Hardware parameter [usb_port] not found! "
+        "FeetechHardwareInterface::init_transport_ Hardware parameter [usb_port] not found! "
         "Make sure to have <param name=\"usb_port\">/dev/XXXX</param>");
     return CallbackReturn::ERROR;
   }
@@ -57,7 +57,7 @@ CallbackReturn FeetechHardwareInterface::init_transport_() {
   auto serial_port = std::make_unique<feetech_driver::SerialPort>(usb_port_it->second);
 
   if (const auto result = serial_port->configure(); !result) {
-    spdlog::error("FeetechHardware::on_init -> {}", result.error());
+    spdlog::error("FeetechHardwareInterface::init_transport_ -> {}", result.error());
     return CallbackReturn::ERROR;
   }
 
@@ -188,11 +188,16 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
       }
     }
 
-    // Lock EPROM and re-enable torque after writing parameters
+    // Lock EPROM after writing parameters (for all joints)
+    if (const auto result = communication_protocol_->lock_eprom(joint_ids_[i]); !result) {
+      spdlog::error("FeetechHardwareInterface::configure_joints_ lock_eprom -> {}", result.error());
+      return CallbackReturn::ERROR;
+    }
+
     // Only enable torque for joints with command interfaces (Follower Arm)
     if (!joint.command_interfaces.empty()) {
-      if (const auto result = communication_protocol_->enable_torque(joint_ids_[i]); !result) {
-        spdlog::error("FeetechHardwareInterface::configure_joints_ enable_torque -> {}", result.error());
+      if (const auto result = communication_protocol_->set_torque(joint_ids_[i], true); !result) {
+        spdlog::error("FeetechHardwareInterface::configure_joints_ set_torque -> {}", result.error());
         return CallbackReturn::ERROR;
       }
     }
