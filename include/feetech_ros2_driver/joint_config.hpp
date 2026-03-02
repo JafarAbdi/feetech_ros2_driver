@@ -11,34 +11,11 @@
 
 namespace feetech_ros2_driver {
 
-/// Joint parameters loaded from YAML config file
 using JointParams = std::unordered_map<std::string, std::string>;
-/// Map of joint name to its parameters
 using JointConfigMap = std::unordered_map<std::string, JointParams>;
 
-/// Load joint configuration from a YAML file
-/// @param file_path Path to the YAML configuration file
-/// @return JointConfigMap if successful, std::nullopt on error
-///
-/// Expected YAML format:
-/// ```yaml
-/// joints:
-///   joint1:
-///     id: 1
-///     homing_offset: 582
-///     range_min: 700
-///     range_max: 3600
-///     p_coefficient: 16
-///     i_coefficient: 0
-///     d_coefficient: 32
-///   joint2:
-///     id: 2
-///     max_torque_limit: 500
-///     protection_current: 250
-///     overload_torque: 25
-/// ```
+/// Load joint configuration from a YAML file (expects top-level "joints:" map).
 inline std::optional<JointConfigMap> load_joint_config(const std::string& file_path) {
-  // Check if file exists before attempting to parse
   if (!std::filesystem::exists(file_path)) {
     spdlog::error("joint_config_file '{}' does not exist", file_path);
     return std::nullopt;
@@ -100,10 +77,7 @@ inline std::optional<JointConfigMap> load_joint_config(const std::string& file_p
   }
 }
 
-/// Merge YAML config parameters with URDF parameters (YAML takes precedence)
-/// @param yaml_params Parameters from YAML config file
-/// @param urdf_params Parameters from URDF joint definition
-/// @return Merged parameters with YAML values overriding URDF values
+/// Merge YAML over URDF parameters (YAML takes precedence).
 inline JointParams merge_joint_params(const JointParams& yaml_params, const JointParams& urdf_params) {
   JointParams merged = urdf_params;
   for (const auto& [key, value] : yaml_params) {
@@ -113,4 +87,3 @@ inline JointParams merge_joint_params(const JointParams& yaml_params, const Join
 }
 
 }  // namespace feetech_ros2_driver
-

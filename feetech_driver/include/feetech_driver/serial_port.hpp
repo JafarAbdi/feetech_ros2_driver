@@ -46,18 +46,6 @@ class SerialPort {
     }
   }
 
-  // template <std::size_t N>
-  // Result read(std::array<uint8_t, N>* buffer) {
-  //   return check_port().and_then([&]() -> Result {
-  //     for (auto& byte : *buffer) {
-  //       if (const auto result = read_byte(&byte); !result) {
-  //         return tl::make_unexpected(fmt::format("SerialPort::read -> {}", result.error()));
-  //       }
-  //     }
-  //     return {};
-  //   });
-  // }
-
   template <std::size_t N>
   Result read(std::array<uint8_t, N>* buffer) {
     return check_port().and_then([&]() { return read_exact(buffer->data(), N); });
