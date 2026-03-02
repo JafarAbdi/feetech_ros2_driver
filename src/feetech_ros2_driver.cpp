@@ -113,27 +113,22 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMa
     const auto& joint = info_.joints[i];
     const std::string& joint_name = joint.name;
 
-    // Look up YAML config by URDF id (hardware identity)
-    JointParams merged_params;
+    // Required: id (from URDF — hardware identity)
     const auto urdf_id_it = joint.parameters.find("id");
-    if (urdf_id_it != joint.parameters.end()) {
-      int id = std::stoi(urdf_id_it->second);
-      if (auto it = yaml_by_id.find(id); it != yaml_by_id.end()) {
-        merged_params = merge_joint_params(it->second, joint.parameters);
-      } else {
-        merged_params = JointParams(joint.parameters.begin(), joint.parameters.end());
-      }
-    } else {
-      merged_params = JointParams(joint.parameters.begin(), joint.parameters.end());
-    }
-
-    // Required: id
-    const auto id_it = merged_params.find("id");
-    if (id_it == merged_params.end()) {
+    if (urdf_id_it == joint.parameters.end()) {
       spdlog::error("Joint '{}' does not have required 'id' parameter", joint_name);
       return CallbackReturn::ERROR;
     }
-    joint_ids_[i] = static_cast<uint8_t>(std::stoi(id_it->second));
+    const int id = std::stoi(urdf_id_it->second);
+    joint_ids_[i] = static_cast<uint8_t>(id);
+
+    // Merge YAML config (looked up by servo id) over URDF params
+    JointParams merged_params;
+    if (auto it = yaml_by_id.find(id); it != yaml_by_id.end()) {
+      merged_params = merge_joint_params(it->second, joint.parameters);
+    } else {
+      merged_params = JointParams(joint.parameters.begin(), joint.parameters.end());
+    }
 
     if (merged_params.find("offset") != merged_params.end()) {
       spdlog::warn("Joint '{}': 'offset' param is deprecated and ignored — use 'homing_offset' instead", joint_name);
