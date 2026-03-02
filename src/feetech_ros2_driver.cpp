@@ -12,7 +12,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <unordered_set>
 #include <vector>
 
 namespace feetech_ros2_driver {
@@ -30,12 +29,12 @@ CallbackReturn FeetechHardwareInterface::on_init(const hardware_interface::Hardw
     return CallbackReturn::ERROR;
   }
 
-  JointConfigMap yaml_config;
-  if (load_yaml_config_and_warn_(yaml_config) != CallbackReturn::SUCCESS) {
+  JointIdConfigMap yaml_by_id;
+  if (load_yaml_config_and_warn_(yaml_by_id) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
 
-  if (configure_joints_(yaml_config) != CallbackReturn::SUCCESS) {
+  if (configure_joints_(yaml_by_id) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
 
@@ -62,14 +61,14 @@ CallbackReturn FeetechHardwareInterface::init_transport_() {
     return CallbackReturn::ERROR;
   }
 
-  communication_protocol_ =
-      std::make_unique<feetech_driver::CommunicationProtocol>(std::move(serial_port));
+  communication_protocol_ = std::make_unique<feetech_driver::CommunicationProtocol>(std::move(serial_port));
 
   return CallbackReturn::SUCCESS;
 }
 
 // Optional YAML overlay — if not provided, URDF params are used as-is.
-CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointConfigMap& out_yaml) {
+// Builds an ID-keyed map: URDF id is the hardware identity, YAML name is just a label.
+CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointIdConfigMap& out_yaml) {
   out_yaml.clear();
 
   const auto cfg_it = info_.hardware_parameters.find("joint_config_file");
@@ -81,43 +80,49 @@ CallbackReturn FeetechHardwareInterface::load_yaml_config_and_warn_(JointConfigM
   if (!loaded) {
     return CallbackReturn::ERROR;
   }
-  out_yaml = std::move(*loaded);
 
-  // Build URDF joint name set
-  std::unordered_set<std::string> urdf_names;
-  urdf_names.reserve(info_.joints.size());
-  for (const auto& j : info_.joints) {
-    urdf_names.insert(j.name);
-  }
-
-  // Warn: YAML joints not in URDF
-  for (const auto& [yaml_joint_name, _] : out_yaml) {
-    if (urdf_names.find(yaml_joint_name) == urdf_names.end()) {
-      spdlog::warn("YAML joint '{}' not found in URDF (will be ignored)", yaml_joint_name);
+  // Re-key by servo id
+  for (auto& [name, params] : *loaded) {
+    auto it = params.find("id");
+    if (it == params.end()) {
+      spdlog::error("YAML joint '{}' has no 'id' parameter", name);
+      return CallbackReturn::ERROR;
+    }
+    int id = std::stoi(it->second);
+    if (!out_yaml.emplace(id, std::move(params)).second) {
+      spdlog::error("Duplicate servo id {} in YAML (joint '{}')", id, name);
+      return CallbackReturn::ERROR;
     }
   }
 
-  // Warn: URDF joints missing in YAML
+  // Warn: URDF ids missing in YAML
   for (const auto& j : info_.joints) {
-    if (out_yaml.find(j.name) == out_yaml.end()) {
-      spdlog::warn("URDF joint '{}' has no YAML entry (using URDF defaults)", j.name);
+    auto id_it = j.parameters.find("id");
+    if (id_it != j.parameters.end() && out_yaml.find(std::stoi(id_it->second)) == out_yaml.end()) {
+      spdlog::warn("URDF joint '{}' (id={}) has no YAML entry (using URDF defaults)", j.name, id_it->second);
     }
   }
 
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn FeetechHardwareInterface::configure_joints_(const JointConfigMap& yaml_config) {
+CallbackReturn FeetechHardwareInterface::configure_joints_(const JointIdConfigMap& yaml_by_id) {
   joint_ids_.assign(info_.joints.size(), 0);
 
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto& joint = info_.joints[i];
     const std::string& joint_name = joint.name;
 
-    // Merge YAML over URDF params
+    // Look up YAML config by URDF id (hardware identity)
     JointParams merged_params;
-    if (auto it = yaml_config.find(joint_name); it != yaml_config.end()) {
-      merged_params = merge_joint_params(it->second, joint.parameters);
+    const auto urdf_id_it = joint.parameters.find("id");
+    if (urdf_id_it != joint.parameters.end()) {
+      int id = std::stoi(urdf_id_it->second);
+      if (auto it = yaml_by_id.find(id); it != yaml_by_id.end()) {
+        merged_params = merge_joint_params(it->second, joint.parameters);
+      } else {
+        merged_params = JointParams(joint.parameters.begin(), joint.parameters.end());
+      }
     } else {
       merged_params = JointParams(joint.parameters.begin(), joint.parameters.end());
     }
@@ -141,17 +146,15 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointConfigMap&
     }
 
     // Single-byte parameters (0-255)
-    for (const auto& [parameter_name, address] :
-         {std::pair{"p_coefficient", SMS_STS_P_COEF},
-          {"d_coefficient", SMS_STS_D_COEF},
-          {"i_coefficient", SMS_STS_I_COEF},
-          {"overload_torque", SMS_STS_OVERLOAD_TORQUE},
-          {"return_delay_time", SMS_STS_RETURN_DELAY},
-          {"acceleration", SMS_STS_ACC}}) {
+    for (const auto& [parameter_name, address] : {std::pair{"p_coefficient", SMS_STS_P_COEF},
+                                                  {"d_coefficient", SMS_STS_D_COEF},
+                                                  {"i_coefficient", SMS_STS_I_COEF},
+                                                  {"overload_torque", SMS_STS_OVERLOAD_TORQUE},
+                                                  {"return_delay_time", SMS_STS_RETURN_DELAY},
+                                                  {"acceleration", SMS_STS_ACC}}) {
       if (const auto param_it = merged_params.find(parameter_name); param_it != merged_params.end()) {
         const auto result = communication_protocol_->write(
-            joint_ids_[i], address,
-            std::experimental::make_array(static_cast<uint8_t>(std::stoi(param_it->second))));
+            joint_ids_[i], address, std::experimental::make_array(static_cast<uint8_t>(std::stoi(param_it->second))));
         if (!result) {
           spdlog::error("FeetechHardwareInterface::configure_joints_ -> {}", result.error());
           return CallbackReturn::ERROR;
@@ -160,11 +163,10 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointConfigMap&
     }
 
     // Two-byte unsigned parameters
-    for (const auto& [parameter_name, address] :
-         {std::pair{"range_min", SMS_STS_MIN_ANGLE_LIMIT_L},
-          {"range_max", SMS_STS_MAX_ANGLE_LIMIT_L},
-          {"max_torque_limit", SMS_STS_MAX_TORQUE_L},
-          {"protection_current", SMS_STS_PROTECTION_CURRENT_L}}) {
+    for (const auto& [parameter_name, address] : {std::pair{"range_min", SMS_STS_MIN_ANGLE_LIMIT_L},
+                                                  {"range_max", SMS_STS_MAX_ANGLE_LIMIT_L},
+                                                  {"max_torque_limit", SMS_STS_MAX_TORQUE_L},
+                                                  {"protection_current", SMS_STS_PROTECTION_CURRENT_L}}) {
       if (const auto param_it = merged_params.find(parameter_name); param_it != merged_params.end()) {
         std::array<uint8_t, 2> buf{};
         feetech_driver::to_sts(&buf[0], &buf[1], std::stoi(param_it->second));
@@ -198,7 +200,7 @@ CallbackReturn FeetechHardwareInterface::configure_joints_(const JointConfigMap&
         spdlog::error("FeetechHardwareInterface::configure_joints_ enable_torque -> {}", result.error());
         return CallbackReturn::ERROR;
       }
-    } 
+    }
   }
 
   return CallbackReturn::SUCCESS;

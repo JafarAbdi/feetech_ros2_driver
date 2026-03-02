@@ -13,6 +13,7 @@ namespace feetech_ros2_driver {
 
 using JointParams = std::unordered_map<std::string, std::string>;
 using JointConfigMap = std::unordered_map<std::string, JointParams>;
+using JointIdConfigMap = std::unordered_map<int, JointParams>;
 
 /// Load joint configuration from a YAML file (expects top-level "joints:" map).
 inline std::optional<JointConfigMap> load_joint_config(const std::string& file_path) {

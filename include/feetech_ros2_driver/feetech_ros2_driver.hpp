@@ -52,8 +52,8 @@ class FeetechHardwareInterface : public hardware_interface::SystemInterface {
   std::vector<uint8_t> joint_ids_;
 
   CallbackReturn init_transport_();
-  CallbackReturn load_yaml_config_and_warn_(JointConfigMap& out_yaml);
-  CallbackReturn configure_joints_(const JointConfigMap& yaml_config);
+  CallbackReturn load_yaml_config_and_warn_(JointIdConfigMap& out_yaml);
+  CallbackReturn configure_joints_(const JointIdConfigMap& yaml_by_id);
   CallbackReturn validate_model_series_();
 };
 }  // namespace feetech_ros2_driver
