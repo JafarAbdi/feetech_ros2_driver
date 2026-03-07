@@ -115,9 +115,9 @@ class CommunicationProtocol {
     });
   }
 
-  /// Disable torque and unlock EPROM 
+  /// Disable torque and unlock EPROM
   Result disable_torque(uint8_t id);
-  /// Enable torque and lock EPROM 
+  /// Enable torque and lock EPROM
   Result enable_torque(uint8_t id);
 
   Result set_torque(uint8_t id, bool enable);
