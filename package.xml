@@ -13,6 +13,7 @@
   <url type="repository">https://github.com/JafarAbdi/feetech_ros2_driver/</url>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
   <depend>libexpected-dev</depend>
