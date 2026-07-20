@@ -15,7 +15,7 @@
   <depend>rclcpp</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
-  <depend>tl_expected</depend>
+  <depend>libexpected-dev</depend>
   <depend>spdlog</depend>
   <depend>fmt</depend>
   <depend>range-v3</depend>
